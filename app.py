@@ -1,20 +1,26 @@
 from flask import Flask, request, jsonify
 import requests
 
-# Initialize Flask app
 app = Flask(__name__)
 
-@app.route('/', methods=['GET'])
-def hello_world():
-    user_name = request.headers.get("username")
-    password = request.headers.get("password")
+def authorization_access(func):
+    def wrapper(*args, **kwargs):
+        user_name = request.headers.get("username")
+        password = request.headers.get("password")
 
-    if user_name == "kartik" and password == "kartik":
-        return jsonify({"message": "Hello, World!"}), 200
-    else:
-        return jsonify({"message": "NOT Hello, World!"}), 200
+        if user_name == "kartik" and password == "kartik":
+            return func(*args, **kwargs)
+        else:
+            return jsonify({"message": "Unauthorized"}), 403 
+    return wrapper
+
+@app.route('/', methods=['GET'])
+@authorization_access
+def hello_world():
+    return jsonify({"message": "Hello, World!"}), 200
 
 @app.route('/news/<info>', methods=['GET'])
+@authorization_access
 def news(info):
     base_url = "https://api.webz.io/newsApiLite?token=b5d22bb0-af58-4e7f-b59f-d3d4c02c5ee4&q="
     url = base_url + info
